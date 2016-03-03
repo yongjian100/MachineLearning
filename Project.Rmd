@@ -67,9 +67,13 @@ control <- trainControl(method="cv", 5)
 fitmodel <- train(classe ~ ., data=trainData, method="rf", trControl=control, ntree=250)
 
 fitmodel
+```
+```{r, results='hide'}
 #fitting to validation model
 predicted <- predict(fitmodel, testData)
 predicted
+```
+```{r}
 confusionMatrix(testData$classe, predicted)
 #accuracy
 accuracy <- postResample(predicted, testData$classe)
