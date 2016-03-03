@@ -6,14 +6,14 @@ date: "Tuesday, March 01, 2016"
 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
 
 #Loading dataset
-```{r, results='hide'}
+```{r, results='hide', message=FALSE, warning=FALSE}
 
 library(caret)
 library(rpart)
 library(rpart.plot)
 library(randomForest)
 library(corrplot)
-rm(list=ls())
+
 setwd("C:/Users/YJ/Desktop/Data Science specialization/C8 Machine Learning")
 training <-read.csv("pml-training.csv")
 testing <- read.csv("pml-testing.csv")
@@ -38,6 +38,9 @@ training <- training[, !train]
 trained <- training[, sapply(training, is.numeric)]
 trained$classe <- tclasse
 
+```
+
+```{r}
 dim(trained)
 ```
 The cleaned training data set now contains 19622 observations and 53 variables. 
@@ -59,7 +62,7 @@ testData <- trained[-inTrain, ]
 
 Random Forest algorithm was used to generate a model. This method selects for important variables and is accurate. A 5-fold cross validation was used when applying the algorithm.
 
-```{r, results='hide'}
+```{r}
 control <- trainControl(method="cv", 5)
 fitmodel <- train(classe ~ ., data=trainData, method="rf", trControl=control, ntree=250)
 
