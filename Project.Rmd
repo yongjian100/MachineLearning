@@ -1,0 +1,90 @@
+---
+title: "Project"
+author: "YJ Lee"
+date: "Tuesday, March 01, 2016"
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+#Loading dataset
+```{r, results='hide'}
+
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+library(corrplot)
+rm(list=ls())
+setwd("C:/Users/YJ/Desktop/Data Science specialization/C8 Machine Learning")
+training <-read.csv("pml-training.csv")
+testing <- read.csv("pml-testing.csv")
+dim(training)
+
+```
+
+#Preprocessing data
+```{r, results='hide'}
+
+#removing near zero Variates from training data
+nzv <- nearZeroVar(training, saveMetrics=T)
+training <- training[, !nzv$nzv]
+
+#removing NAs
+training <- training[, colSums(is.na(training)) == 0] 
+
+#cleaning out unimportant columns
+tclasse <- training$classe
+train <- grepl("^X|timestamp|window", names(training))
+training <- training[, !train]
+trained <- training[, sapply(training, is.numeric)]
+trained$classe <- tclasse
+
+dim(trained)
+```
+The cleaned training data set now contains 19622 observations and 53 variables. 
+
+#Splitting training data
+
+Since the training data is quite large, we further create a stratified random sample of the data into training and test sets.
+
+```{r, results='hide'}
+
+set.seed(6735) # for reproducibility
+inTrain <- createDataPartition(trained$classe, p=0.7, list=F)
+trainData <- trained[inTrain, ]
+testData <- trained[-inTrain, ]
+
+
+```
+#Data Modeling
+
+Random Forest algorithm was used to generate a model. This method selects for important variables and is accurate. A 5-fold cross validation was used when applying the algorithm.
+
+```{r, results='hide'}
+control <- trainControl(method="cv", 5)
+fitmodel <- train(classe ~ ., data=trainData, method="rf", trControl=control, ntree=250)
+
+fitmodel
+#fitting to validation model
+predicted <- predict(fitmodel, testData)
+predicted
+confusionMatrix(testData$classe, predicted)
+#accuracy
+accuracy <- postResample(predicted, testData$classe)
+accuracy
+#out of set error
+oose <- 1 - as.numeric(confusionMatrix(testData$classe, predicted)$overall[1])
+oose
+
+```
+Accuracy for this model is quite good, at 0.993. This model should be a good prediction model for the test set.
+
+#Predicting for Test Data Set
+
+We now apply the model to the original test data.
+
+```{r}
+result <- predict(fitmodel, testing)
+
+result
+
+```
